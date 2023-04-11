@@ -48,8 +48,7 @@ for (pattern_sentence,tag) in xy:
 
 x_train=np.array(x_train)
 y_train=np.array(y_train)
-print(x_train)
-print(y_train)
+
 
 
 class ChatDataset(Dataset):
@@ -67,11 +66,77 @@ class ChatDataset(Dataset):
     
 
 batch_size=8
+hidden_size=10
+output_size=len(tags)
+input_size=len(x_train[0])
+num_epochs=1000
 
 
 
 dataset=ChatDataset()
 train_loader=DataLoader(dataset=dataset,batch_size=batch_size,shuffle=True,num_workers=2)
+device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+models=NeuralNet(input_size,hidden_size,output_size)
+models=models.to(device)
+
+criterion=nn.CrossEntropyLoss()
+
+optimizer=torch.optim.Adam(models.parameters(),lr=0.001)
+
+
+for epoch in range(num_epochs):
+
+    for (words,labels) in train_loader:
+        words=words.to(device)
+        labels=labels.to(device)
+
+        output=models(words)
+        loss=criterion(output,labels)
+
+        #backward 
+
+        optimizer.zero_grad()
+
+        loss.backward()
+
+        optimizer.step()
+
+    if (epoch+1)%100 ==0:
+
+        print(f'epoch {epoch+1}/{num_epochs} , loss = {loss.item():.4f}')
+
+print(f'final loss = {loss.item():.4f}')
+
+
+data={
+    "model_state":models.state_dict(),
+    "input_size":input_size,
+    "output_size":output_size,
+    "hidden_size":hidden_size,
+    "all_words":all_words,
+    "tags":tags
+
+}
+
+FILE="data.pth"
+torch.save(data,FILE)
+
+print(f'training_complete. file saved to {FILE}')
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+     
 
 
 
